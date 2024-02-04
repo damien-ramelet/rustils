@@ -1,107 +1,58 @@
 use std::cmp::Ordering;
 
-struct NegInf;
+#[derive(Debug)]
+enum PriorityScore {
+    Int { value: usize},
+    NegInf,
+    PosInf,
+}
 
-impl PartialEq for NegInf{
-    fn eq(&self, other: &NegInf) -> bool {
-        false
+impl PartialEq for PriorityScore {
+    fn eq(&self, other: &Self) -> bool {
+        match (&self, other) {
+            (PriorityScore::Int {value}, PriorityScore::Int {value: other_value}) => value.eq(other_value),
+            _ => false,
+        }
     }
 }
 
-impl PartialEq<usize> for NegInf { 
-    fn eq(&self, other: &usize) -> bool {
-        false
+impl PartialOrd for PriorityScore {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (&self, other) {
+            (PriorityScore::NegInf, _) => Some(Ordering::Less),
+            (PriorityScore::PosInf, _) => Some(Ordering::Greater),
+            (PriorityScore::Int { value}, PriorityScore::Int{value: other_value}) => value.partial_cmp(other_value),
+            (PriorityScore::Int { value: _ }, PriorityScore::NegInf) => Some(Ordering::Greater),
+            (PriorityScore::Int { value: _}, PriorityScore::PosInf) => Some(Ordering::Less),
+        }
     }
 }
 
-impl PartialEq<NegInf> for usize {
-    fn eq(&self, other: &NegInf) -> bool {
-        false
-    }
-}
-
-impl Eq for NegInf { }
-
-impl PartialOrd<usize> for NegInf{
-    fn partial_cmp(&self, other: &usize) -> Option<Ordering> {
-        Some(Ordering::Less)
-    }
-}
-
-impl PartialOrd<NegInf> for usize {
-    fn partial_cmp(&self, other: &NegInf) -> Option<Ordering> {
-        Some(Ordering::Greater)
-    }
-}
-
-impl PartialOrd<NegInf> for NegInf {
-    fn partial_cmp(&self, other: &NegInf) -> Option<Ordering> {
-        Some(Ordering::Less)
-    }
-}
-
-struct PosInf;
-
-impl PartialEq for PosInf{
-    fn eq(&self, other: &PosInf) -> bool {
-        false
-    }
-}
-
-impl PartialEq<usize> for PosInf{ 
-    fn eq(&self, other: &usize) -> bool {
-        false
-    }
-}
-
-impl PartialEq<PosInf> for usize{
-    fn eq(&self, other: &PosInf) -> bool {
-        false
-    }
-}
-
-impl Eq for PosInf{ }
-
-impl PartialOrd<usize> for PosInf{
-    fn partial_cmp(&self, other: &usize) -> Option<Ordering> {
-        Some(Ordering::Greater)
-    }
-}
-
-impl PartialOrd<PosInf> for usize {
-    fn partial_cmp(&self, other: &PosInf) -> Option<Ordering> {
-        Some(Ordering::Less)
-    }
-}
-
-impl PartialOrd<PosInf> for PosInf{
-    fn partial_cmp(&self, other: &PosInf) -> Option<Ordering> {
-        Some(Ordering::Greater)
-    }
-}
-
+#[derive(Debug)]
 struct PriorityQueue {
-    vec: Vec<(usize, String)>,
+    vec: Vec<(PriorityScore, String)>,
 }
 
 impl PriorityQueue {
-    fn push(&mut self, element: (usize, &str)) {
-        let mut inserted = false;
+    fn push(&mut self, element: (PriorityScore, &str)) {
+        let length = self.vec.len();
+        if length == 0 {
+            self.vec.insert(0, (element.0, String::from(element.1)));
+            return
+        }
         for (index, inserted_element) in self.vec.iter().enumerate() {
             let (priority, _) = inserted_element;
-            let priority_to_instert = element.0;
-            if priority_to_instert < *priority {
-                self.vec.insert(index, (priority_to_instert, String::from(element.1)));
-                inserted = true;
-                break;
+            if element.0 < *priority {
+                self.vec.insert(index, (element.0, String::from(element.1)));
+                break
+            } else if index + 1 == length {
+                self.vec.insert(length, (element.0, String::from(element.1)));
+                break
             }
-        }
-        if inserted == false {
-            self.vec.insert(self.vec.len(), (element.0, String::from(element.1)));
         }
     }
 
-    fn pop(&mut self) -> (usize, String) {
+    fn pop(&mut self) -> (PriorityScore, String) {
         self.vec.remove(0)
     }
 }
@@ -109,39 +60,30 @@ impl PriorityQueue {
 
 #[cfg(test)]
 mod tests {
-    use crate::priority_queue::NegInf;
-    use crate::priority_queue::PosInf;
-    use crate::priority_queue::PriorityQueue;
-
-    #[test]
-    fn test_negative_infinite_is_almays_lower() {
-        let neg_inf = NegInf { };
-        assert!(1 > neg_inf);
-        assert!(neg_inf < 2);
-        assert!(neg_inf != neg_inf);
-        assert!(neg_inf < neg_inf);
-    }
-
-    #[test]
-    fn test_positive_infinite_is_always_greater() {
-        let pos_inf = PosInf { };
-        assert!(pos_inf > 1);
-        assert!(10 < pos_inf);
-        assert!(pos_inf != pos_inf);
-        assert!(pos_inf > pos_inf);
-    }
-
+    use crate::priority_queue::{PriorityQueue, PriorityScore};
     #[test]
     fn test_priority_queue_insert_elements_as_intended() {
         let mut priority_queue = PriorityQueue { vec: vec![] };
-        priority_queue.push((1000, "one thousand"));
-        priority_queue.push((10, "ten"));
-        priority_queue.push((3, "three"));
-        priority_queue.push((100, "one hundred"));
+        priority_queue.push((PriorityScore::PosInf, "positive infinite"));
+        priority_queue.push((PriorityScore::NegInf, "negative infinite"));
+        priority_queue.push((PriorityScore::NegInf, "negative infinite"));
+        priority_queue.push((PriorityScore::Int { value: 100}, "one hundred"));
+        priority_queue.push((PriorityScore::Int { value: 10}, "ten"));
+        priority_queue.push((PriorityScore::Int { value: 3}, "three"));
+        priority_queue.push((PriorityScore::PosInf, "positive infinite"));
+        priority_queue.push((PriorityScore::Int { value: 1000}, "one thousand"));
+        priority_queue.push((PriorityScore::NegInf, "negative infinite"));
+        priority_queue.push((PriorityScore::NegInf, "negative infinite"));
 
-        assert_eq!(priority_queue.pop(), (3, String::from("three")));
-        assert_eq!(priority_queue.pop(), (10, String::from("ten")));
-        assert_eq!(priority_queue.pop(), (100, String::from("one hundred")));
-        assert_eq!(priority_queue.pop(), (1000, String::from("one thousand")));
+        assert_eq!(priority_queue.pop().1, String::from("negative infinite"));
+        assert_eq!(priority_queue.pop().1, String::from("negative infinite"));
+        assert_eq!(priority_queue.pop().1, String::from("negative infinite"));
+        assert_eq!(priority_queue.pop().1, String::from("negative infinite"));
+        assert_eq!(priority_queue.pop(), (PriorityScore::Int{value: 3}, String::from("three")));
+        assert_eq!(priority_queue.pop(), (PriorityScore::Int{value: 10}, String::from("ten")));
+        assert_eq!(priority_queue.pop(), (PriorityScore::Int{value: 100}, String::from("one hundred")));
+        assert_eq!(priority_queue.pop(), (PriorityScore::Int{value :1000}, String::from("one thousand")));
+        assert_eq!(priority_queue.pop().1, String::from("positive infinite"));
+        assert_eq!(priority_queue.pop().1, String::from("positive infinite"));
     }
 }
