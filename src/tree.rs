@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Node {
     value: i32,
     parent: RefCell<Vec<Weak<Node>>>,
@@ -9,6 +10,7 @@ struct Node {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Tree {
     nodes: RefCell<Vec<Rc<Node>>>,
 }

@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 enum PriorityScore {
     Int { value: usize},
     NegInf,
@@ -33,6 +34,7 @@ struct PriorityQueue {
     vec: Vec<(PriorityScore, String)>,
 }
 
+#[allow(dead_code)]
 impl PriorityQueue {
     fn push(&mut self, element: (PriorityScore, &str)) {
         let length = self.vec.len();

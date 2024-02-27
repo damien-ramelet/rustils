@@ -1,16 +1,19 @@
 use std::rc::{Rc, Weak};
 use std::cell::RefCell;
 
+#[allow(dead_code)]
 struct Node {
     name: String,
     edges: RefCell<Vec<Rc<Edge>>>,
 }
 
+#[allow(dead_code)]
 struct Edge {
     weight: i32,
     nodes: RefCell<Vec<Weak<Node>>>,
 }
 
+#[allow(dead_code)]
 struct Graph {
     nodes: RefCell<Vec<Rc<Node>>>,
 }
